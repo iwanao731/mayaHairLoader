@@ -1,0 +1,49 @@
+global proc drawHair(float $points[], int $numPoint, int $resolution, float $radius)
+{    
+    // calculate number of strand
+    $numStrand = $numPoint / $resolution;
+    print($numStrand + "\n");
+    
+    int $index = 0;
+    for($s=0; $s<$numStrand; $s++)
+    {
+        string $curvecmd;
+        $curvecmd += "curve -d 3 ";
+
+        int $n = $resolution;
+        // each strand
+    	for($i=0; $i<$n; $i++)
+    	{
+    		$curvecmd += ("-p ");
+    		for($j=0; $j<3; $j++)
+    		{
+    			$curvecmd += ((string)$points[$index] + " "); 
+    			$index ++;
+    			//print($index + "\n");
+    		};
+    	};
+    	
+    	for($i=0; $i<$n+2; $i++)
+    	{
+    		if($i<2)
+    		{
+    			$curvecmd += ("-k 0 ");
+    		}
+    		else if($i>=$n)
+    		{
+    			$curvecmd += ("-k " + (string)($n-3) + " ");			
+    		}
+    		else
+    		{
+    			$curvecmd += ("-k " + (string)($i-2) + " ");			
+    		}
+    	};
+    	$curvecmd += (";\n");
+    	//print($curvecmd);
+    	eval($curvecmd);
+    	
+    }
+
+  	// extrude hair
+   	extrudeHair($numStrand, $resolution, $points, $radius);    	
+}

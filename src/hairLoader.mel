@@ -1,0 +1,53 @@
+global proc hairLoader(string $filename, float $radius)
+{    
+	// open the file for writing
+	$file = `fopen $filename "r"`;
+
+	$numParticles = `fgetline $file`;
+	print("particle num : " + $numParticles + "\n");
+
+	// set num strands
+	$count = (int)$numParticles;
+	string $data[];
+    int $num = 0;
+   	float $points[];
+
+	// set particle position
+	while ($count>0)
+	{
+		$lineOfText = `fgetline $file`;
+		tokenize $lineOfText "\t" $data;
+
+		float $pos[3];
+		$pos[0] = (float)$data[0];
+		$pos[1] = (float)$data[1];
+		$pos[2] = (float)$data[2];
+		//print($pos[0] + "\t");
+		//print($pos[1] + "\t");
+		//print($pos[2] + "\n");
+		$count--;
+		
+		$points[$num+0] = $pos[0];
+		$points[$num+1] = $pos[1];
+		$points[$num+2] = $pos[2];
+		$num = $num+ 3;
+	}
+
+	$numStrands = `fgetline $file`;
+	print("strand num : " + $numStrands + "\n");
+
+	$count = (int)$numStrands;
+	int $resolution;
+	while ($count>0)
+	{
+		$lineOfText = `fgetline $file`;
+		$resolution = (float)$lineOfText;
+		//print($resolution + "\n");
+		$count--;
+	}
+
+	// close the file
+	fclose $file;
+	
+	drawHair($points, $numParticles, $resolution, $radius);
+}

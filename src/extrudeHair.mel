@@ -1,0 +1,98 @@
+// extrude Hair
+
+global proc selectObject(string $object_name)
+{
+    print("select object: " + $object_name + "\n");
+	select -r $object_name;
+}
+
+global proc selectAddObject(string $object_name)
+{
+    print("add object: " + $object_name + "\n");
+	select -add $object_name;
+}
+
+global proc createNurbsCircle(float $position[], float $normal[], float $radius)
+{
+    print("createNurbsCircle\n");
+	
+	string $cmd;
+	string $cmd_position = "-c " + (string)($position[0]) + " " + (string)($position[1]) + " " + (string)($position[2]) + " ";
+	string $cmd_normal = "-nr " + (string)($normal[0]) + " " + (string)($normal[1]) + " " + (string)($normal[2]) + " ";
+	string $cmd_amari = "-sw 360 -r " + (string)($radius) + " -d 3 -ut 0 -tol 0.01 -s 8 -ch 1;";
+	$cmd = "circle " + $cmd_position + $cmd_normal + $cmd_amari + ";\n";
+	eval($cmd);
+}
+
+global proc calcNormal(float $source[], float $target[], float $normal[])
+{    
+    float $n[];
+	$n[0] = $target[0] - $source[0];
+	$n[1] = $target[1] - $source[1];
+	$n[2] = $target[2] - $source[2];
+	
+	float $length = sqrt($n[0]*$n[0] + $n[1]*$n[1] + $n[2]*$n[2]);
+	
+	$normal[0] = $n[0]/$length;
+	$normal[1] = $n[1]/$length;
+	$normal[2] = $n[2]/$length;	
+}
+
+global proc extrudeNurbsCurve(string $circle_name, string $curve_name)
+{
+    print("extrude nurbs curve\n");
+
+	selectObject($circle_name);
+	selectAddObject($curve_name);
+
+	string $cmd;
+	string $cmd_parameter = "-ch true -rn true -po 1 -et 2 -ucp 0 -fpt 0 -upn 0 -rotation 0 -scale 1 -rsp 1";
+	$cmd = "extrude " + $cmd_parameter + " " + $circle_name + " " + $curve_name + " ;\n";
+	eval($cmd);
+}
+
+global proc extrudeHair(int $numStrands, int $resolution, float $positions[], float $radius)
+{
+	for($i=0; $i<$numStrands; $i++)
+	{
+		string $strandName = "curve" + (string)($i+1);
+		string $circleName = "nurbsCircle" + (string)($i+1);
+
+		// create circle at each stem of hair
+		int $index = $resolution * $i * 3;
+
+		// position
+	    print("set position\n");		
+		float $rootPosition[], $secondPosition[];
+		$rootPosition[0] = $positions[$index + 0];
+		$rootPosition[1] = $positions[$index + 1];
+		$rootPosition[2] = $positions[$index + 2];
+
+		$secondPosition[0] = $positions[$index + 3];
+		$secondPosition[1] = $positions[$index + 4];
+		$secondPosition[2] = $positions[$index + 5];
+
+		// normal
+	    print("set normal\n");
+		float $rootNormal[];
+		calcNormal($rootPosition, $secondPosition, $rootNormal);
+
+		createNurbsCircle($rootPosition, $rootNormal, $radius);
+
+		// extrude
+		extrudeNurbsCurve($circleName, $strandName);
+	}
+	
+	// delete function
+	for($i=0; $i<$numStrands; $i++)
+	{
+		string $strandName = "curve" + (string)($i+1);
+		string $circleName = "nurbsCircle" + (string)($i+1);
+
+		// delete original circle and curve
+		print("delete all circle and curve \n");
+		select -r $strandName ;
+		select -add $circleName ;
+		doDelete;
+	}
+}
